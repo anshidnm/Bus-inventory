@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="p-5 container">
+    <div class="d-flex justify-content-between">
+        <h4 class="text-center">Bus Inventory</h4>
+        <button type="button" class="btn btn-dark align-right" data-toggle="modal" data-target="#exampleModal">Add Bus</button>
+    </div>
+    <table class="table table-hover mt-5">
+        <thead>
+          <tr>
+            <th scope="col">Bus Number</th>
+            <th scope="col">Brand</th>
+            <th scope="col">No of Seats</th>
+            <th scope="col">Trip</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Conductor</th>
+            <th scope="col">Driver</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody id="bus_list">
+            {% include "bus_list.html" %}
+        </tbody>
+      </table>    
+</div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Add A New Bus</h5>
+          <button type="button" class="close modal_close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            {% csrf_token %}
+            <div class="">{{ form.bus_number }}</div>
+            <div class="mt-3">{{ form.brand }}</div>
+            <div class="mt-3">{{ form.no_of_seats }}</div>
+            <div class="mt-3">{{ form.trip }}</div>
+            <div class="mt-3">{{ form.duration }}</div>
+            <div class="mt-3">{{ form.conductor }}</div>
+            <div class="mt-3">{{ form.driver }}</div>
+        </div>
+        <p id="form_errors" class="text-danger text-sm text-center"></p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light modal_close" data-dismiss="modal">Close</button>
+          <button type="button" id="save_button" class="btn btn-dark">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+{% block script %}
+<script>
+    alertify.set('notifier', 'position', 'top-right')
+    var headers = {
+            "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val()
+        }
+
+    $(document).on("click", "#save_button", ()=>{
+        var bus_number = $("#id_bus_number").val()
+        var brand = $("#id_brand").val()
+        var no_of_seats = $("#id_no_of_seats").val()
+        var trip = $("#id_trip").val()
+        var duration = $("#id_duration").val()
+        var conductor = $("#id_conductor").val()
+        var driver = $("#id_driver").val()
+
+        if(
+            !bus_number.trim()
+            || !brand.trim()
+            || !no_of_seats.trim()
+            || !trip.trim()
+            || !duration.trim()
+            || !conductor.trim()
+            || !driver.trim()
+        ){
+            $("#form_errors").text("All fields are required")
+            $("#form_errors").show()
+            setTimeout(()=>{
+                $("#form_errors").text("")
+                $("#form_errors").hide()
+            }, 3000)
+            return false
+        }
+        var durationArr = duration.split(":")
+        var durationErr = false
+        if (durationArr.length !== 3) {
+            durationErr = true
+        } else {
+            value = durationArr[0];
+            if (isNaN(value) || value.length > 2 || value < 0) {
+                durationErr = true
+            }
+            value = durationArr[1];
+            if (isNaN(value) || value.length > 2 || value < 0 || value > 59) {
+                durationErr = true
+            }
+            value = durationArr[2];
+            if (isNaN(value) || value.length > 2 || value < 0 || value > 59) {
+                durationErr = true
+            }
+        }
+        if (durationErr){
+            $("#form_errors").text("Incorrect Duration, Must be in HH:MM:SS format")
+            $("#form_errors").show()
+            setTimeout(()=>{
+                $("#form_errors").text("")
+                $("#form_errors").hide()
+            }, 3000)
+            return false
+        }
+
+        var data = {
+            bus_number: bus_number,
+            brand: brand,
+            no_of_seats: no_of_seats,
+            trip: trip,
+            duration: duration,
+            conductor: conductor,
+            driver: driver,
+        }
+        $.ajax({
+            url: "/bus/",
+            method: "POST",
+            headers: headers,
+            data: data,
+            success: (res)=>{
+                if(res.status){
+                $("#bus_list").html(res.template)
+                alertify.success("Bus Added Successfully")
+                }else{
+                alertify.error("Something went wrong")
+                }
+            },
+            error: (err)=>{
+                alertify.error("Something went wrong")
+            },
+            beforeSend: ()=>{
+                $(".modal_close").click()
+            }
+        })
+    })
+
+    $(document).on("click", ".modal_close", ()=>{
+        $(".form-control").val("")
+    })
+    $(document).on("click", ".delete_but", function(){
+        var id = $(this).attr("data-bus")
+        var url = `/bus/${id}/`
+        $.ajax({
+            url: url,
+            method: "DELETE",
+            headers: headers,
+            success: (res)=>{
+                if(res.status){
+                $("#bus_list").html(res.template)
+                alertify.success("Bus Removed Successfully")
+                }else{
+                alertify.error("Something went wrong")
+                }
+            },
+            error: (err)=>{
+                alertify.error("Something went wrong")
+            },
+        })
+    })
+</script>
+{% endblock %}

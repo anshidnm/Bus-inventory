@@ -1,0 +1,17 @@
+{% for bus in bus_list %}
+<tr>
+    <td>{{ bus.bus_number }}</td>
+    <td>{{ bus.brand }}</td>
+    <td>{{ bus.no_of_seats }}</td>
+    <td>{{ bus.trip }}</td>
+    <td>{{ bus.duration }}</td>
+    <td>{{ bus.conductor }}</td>
+    <td>{{ bus.driver }}</td>
+    <td><a style="text-decoration: none;" class="text-danger delete_but" data-bus="{{ bus.id }}" href="#">Remove</a></td>
+  </tr>
+{% empty %}
+    <tr>
+    <th colspan="7" class="text-center">No Data Found</th>
+    </tr>
+{% endfor %}
+
