@@ -32,8 +32,7 @@ class BusView(View):
 
 class BusDeleteView(View):
     """
-    View for list bus in inventory and
-    add bus to inventory.
+    View for delete a bus from the system.
     """
     def delete(self, request, *args, **kwargs):
         id = kwargs["id"]
